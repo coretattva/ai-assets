@@ -1,0 +1,42 @@
+  name: Upload Gemma E4B Model to Release
+
+  on:
+    workflow_dispatch:
+      inputs:
+        tag:
+          description: 'Release tag (e.g. v1.0.0-models)'
+          required: true
+          default: 'v1.0.0-models'
+
+  jobs:
+    upload-model:
+      runs-on: ubuntu-latest
+      timeout-minutes: 120
+
+      steps:
+        - name: Download Gemma E4B model from HuggingFace
+          run: |
+            wget --progress=dot:giga \
+              -O gemma-4-E4B-it.litertlm \
+              "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm?download=true"
+
+        - name: Split into 1.9 GB chunks
+          run: split -b 1900m gemma-4-E4B-it.litertlm gemma-4-E4B-it.litertlm.part
+
+        - name: Create release if it does not exist
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            gh release view "${{ inputs.tag }}" --repo "${{ github.repository }}" > /dev/null 2>&1 || \
+            gh release create "${{ inputs.tag }}" \
+              --repo "${{ github.repository }}" \
+              --title "Gemma 4 Models ${{ inputs.tag }}" \
+              --notes "Reassemble E2B: cat gemma-4-E2B-it.litertlm.part* > gemma-4-E2B-it.litertlm\nReassemble E4B: cat gemma-4-E4B-it.litertlm.part* > gemma-4-E4B-it.litertlm"
+
+        - name: Upload parts to release
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            gh release upload "${{ inputs.tag }}" gemma-4-E4B-it.litertlm.part* \
+              --repo "${{ github.repository }}" \
+              --clobber
