@@ -20,20 +20,23 @@ jobs:
             -O gemma-4-E2B-it.litertlm \
             "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm?download=true"
 
-      - name: Create release (skip if already exists)
+      - name: Split into 1.9 GB chunks
+        run: split -b 1900m gemma-4-E2B-it.litertlm gemma-4-E2B-it.litertlm.part
+
+      - name: Create release if it does not exist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          gh release view "${{ inputs.tag }}" --repo "${{ github.repository }}" > /dev/null 2>&1 || \
           gh release create "${{ inputs.tag }}" \
             --repo "${{ github.repository }}" \
             --title "Gemma 4 E2B Model ${{ inputs.tag }}" \
-            --notes "Gemma 4 E2B on-device model for VELOCT" \
-            || true
+            --notes "Reassemble before use: cat gemma-4-E2B-it.litertlm.part* > gemma-4-E2B-it.litertlm"
 
-      - name: Upload model to release
+      - name: Upload parts to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ inputs.tag }}" gemma-4-E2B-it.litertlm \
+          gh release upload "${{ inputs.tag }}" gemma-4-E2B-it.litertlm.part* \
             --repo "${{ github.repository }}" \
             --clobber
