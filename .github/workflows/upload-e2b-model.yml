@@ -1,40 +1,39 @@
- name: Upload Gemma Model to Release
+name: Upload Gemma Model to Release
 
-  on:
-    workflow_dispatch:
-      inputs:
-        tag:
-          description: 'Release tag (e.g. v1.0.0-models)'
-          required: true
-          default: 'v1.0.0-models'
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v1.0.0-models)'
+        required: true
+        default: 'v1.0.0-models'
 
-  jobs:
-    upload-model:
-      runs-on: ubuntu-latest
-      timeout-minutes: 60
+jobs:
+  upload-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
 
-      steps:
-        - name: Download Gemma model from HuggingFace
-          run: |
-            wget --progress=dot:giga \
-              -O gemma-4-E2B-it.litertlm \
-              "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B
-  -it.litertlm?download=true"
+    steps:
+      - name: Download Gemma model from HuggingFace
+        run: |
+          wget --progress=dot:giga \
+            -O gemma-4-E2B-it.litertlm \
+            "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm?download=true"
 
-        - name: Create release (skip if already exists)
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          run: |
-            gh release create "${{ inputs.tag }}" \
-              --repo "${{ github.repository }}" \
-              --title "Gemma 4 E2B Model ${{ inputs.tag }}" \
-              --notes "Gemma 4 E2B on-device model for VELOCT." \
-              || true
+      - name: Create release (skip if already exists)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ inputs.tag }}" \
+            --repo "${{ github.repository }}" \
+            --title "Gemma 4 E2B Model ${{ inputs.tag }}" \
+            --notes "Gemma 4 E2B on-device model for VELOCT" \
+            || true
 
-        - name: Upload model to release
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          run: |
-            gh release upload "${{ inputs.tag }}" gemma-4-E2B-it.litertlm \
-              --repo "${{ github.repository }}" \
-              --clobber
+      - name: Upload model to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ inputs.tag }}" gemma-4-E2B-it.litertlm \
+            --repo "${{ github.repository }}" \
+            --clobber
